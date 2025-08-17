@@ -15,3 +15,4 @@ WITH vendas_comparacao_preco AS (
 SELECT venda_id, valor_venda, valor_sugerido
 FROM vendas_comparacao_preco
 WHERE regra_respeitada = FALSE
+------------
