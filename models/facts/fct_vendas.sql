@@ -11,12 +11,18 @@ WITH vendas AS (
         v.data_inclusao,
         v.data_atualizacao
     FROM {{ ref('stg_vendas') }} v
-    -- It's generally better to join on the staging table before filtering.
-    -- This ensures the join logic is applied to all data.
+    -- Validation: By using INNER JOINs, you are implicitly validating that every venda 
+    -- record has a corresponding veiculo, concessionaria, vendedor, and cliente record. 
+    -- If a sale in your stg_vendas table has an id_clientes that doesn't exist in dim_clientes, 
+    -- the INNER JOIN will filter out that record, preventing "orphan" data from entering your final fact table.
     JOIN {{ ref('dim_veiculos') }} vei ON v.id_veiculos = vei.veiculo_id
     JOIN {{ ref('dim_concessionarias') }} con ON v.id_concessionarias = con.concessionaria_id
     JOIN {{ ref('dim_vendedores') }} ven ON v.id_vendedores = ven.vendedor_id
     JOIN {{ ref('dim_clientes') }} cli ON v.id_clientes = cli.cliente_id
+    -- By performing these joins, you are not just linking the tables; you are also validating that 
+    -- the foreign key values in your fact table have a valid, corresponding primary key in the dimension 
+    -- tables, which is the core function of a foreign key relationship.
+
 )
 
 SELECT
@@ -32,7 +38,6 @@ SELECT
 FROM vendas
 
 {% if is_incremental() %}
-
   -- This is the crucial part for incremental logic.
   -- We filter for new or updated records based on the timestamp.
   -- {{ this }} refers to the destination table being built.
